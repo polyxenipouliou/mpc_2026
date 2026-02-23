@@ -1,60 +1,200 @@
-This project is a comprehensive toolkit designed to conduct and analyze **Just Noticeable Difference (JND)** experiments for human auditory frequency perception. It includes tools for generating precise audio stimuli, creating instructional and explanatory visualizations using Manim, batch-processing video files, and analyzing survey results with automated scoring and data visualization.
 
-It is part of the SMC - Music Perception and Cognition Project 2025-2026 by Olly, Jenny and Yuhang
+# mpc_2026 — Frequency JND Survey Toolkit
 
-
----
-
-## 📂 Project Structure
-
-### 1. Audio Generation (`/audio`)
-
-* **`make_audio_record.py`**: The primary engine for generating JND test batteries. It creates randomized pairs of sine waves at specific center frequencies (e.g., 200Hz, 1000Hz, 5000Hz) and logs the correct "Answer Key" to a CSV.
-* **`make_audio.py`**: A utility script for generating audio clips by decreasing frequency differences at set intervals.
-* **`control_volume.py`**: A calibration tool that generates alternating high and low volume sine waves to help participants normalize their listening levels before the test.
-
-### 2. Visuals & Animations (`/visuals`)
-
-* **`intro.py`**: A Manim script that generates an introductory video explaining the survey rules and the concept of JND.
-* **`Whole_audio.py`**: Provides a visual representation of the 4-pair audio structure, using horizontal lines to represent high/low pitch patterns.
-* **`make_anima.py`**: Creates a dynamic trend-line visualization showing how frequency levels change across different segments.
-* **`make_Video.py`**: A utility script using **FFmpeg** to batch-combine generated WAV files with a static background image to create MP4 videos for survey platforms.
-
-### 3. Data Analysis (`/analysis`)
-
-* **`judge.py`**: A robust processing script that reads raw survey exports (CSV), maps them against the randomized answer keys, and calculates error counts for every frequency delta.
-* **`plot.py`**: Generates individual performance reports for each participant. It produces a three-panel bar chart (200Hz, 1000Hz, 5000Hz) showing error counts relative to the frequency difference.
+A small Python toolkit to **run a frequency discrimination (JND) survey** end-to-end:
+- generate **tone-pair WAV stimuli** (with randomized order + answer keys),
+- create **instruction animations** (Manim) for participants,
+- optionally package WAVs into **MP4** (static image + audio) for survey platforms,
+- **clean / translate** exported survey CSVs,
+- **score** responses and **plot** per-participant error profiles.
 
 ---
 
-## 🚀 Getting Started
+## What the audio looks like (stimulus design)
 
-### Prerequisites
+Each “audio clip” contains **4 pairs**.  
+Each pair is:
 
-* **Python 3.8+**
-* **FFmpeg** (for video synthesis)
-* **Required Libraries**:
+- 200 ms silence
+- 500 ms tone #1
+- 200 ms silence
+- 500 ms tone #2
+- followed by extra silence padding (several 200 ms blanks)
+
+Participants answer, for each pair: **which tone is higher** (“First” / “Second”). :contentReference[oaicite:0]{index=0}
+
+---
+
+## Requirements
+
+### Python
+- Python 3.9+ recommended
+- Packages:
+  - `numpy`, `scipy`
+  - `pandas`
+  - `matplotlib`
+  - `manim` (only if you want the animations)
+
+### System tools
+- **FFmpeg**
+
+
+Install Python deps:
 ```bash
 pip install numpy scipy pandas matplotlib manim
-
 ```
-
-
-
-### Workflow
-
-1. **Calibration**: Run `control_volume.py` to produce a `calibration200HZ.wav` file for users.
-2. **Generate Stimuli**: Run `make_audio_record.py`. Enter your desired center frequency and step size. This will output a folder of `.wav` files and a `_result_record.csv`.
-3. **Create Survey Videos**: Use `make_Video.py` to convert those WAVs into MP4s for easier web playback.
-4. **Analyze Results**: Place your survey response CSV in the directory and run `judge.py` to grade the responses, followed by `plot.py` to visualize the JND thresholds.
 
 ---
 
-## 📊 Analysis Outputs
+## Typical workflow (quick start)
 
-The analysis scripts output a `final_scored_grouped.csv` which organizes results by:
+### 1) (Optional) Generate a calibration file
 
-* **Metadata**: User ID, device type, and duration.
-* **Frequency Deltas**: Error counts for specific differences (e.g., a "2 (200Hz)" column shows errors when the difference was only 2Hz at a 200Hz base).
-* **Visual Reports**: PNG files named by User ID showing their specific "Error Curve."
+Creates a 20s **200 Hz** calibration WAV with alternating loud/quiet segments. 
 
+```bash
+python control_volume.py
+```
+
+Output:
+
+* `calibration200HZ.wav`
+
+---
+
+### 2) Generate survey audio stimuli (WAV)
+
+#### Option A — interactive generator (simple)
+
+Prompts for center frequency / step / number of pairs, outputs WAVs into a folder named by the center frequency. 
+
+```bash
+python make_audio.py
+```
+
+#### Option B — recorded generator (recommended)
+
+Edits are made at the top of the script (center frequency, step size, number of pairs, output folder). It also writes a **CSV record** that includes the **answer key string** (e.g., `FSFF`). 
+
+```bash
+python make_audio_record.py
+```
+
+Outputs:
+
+* `MPC_Audio/*.wav`
+* `MPC_Audio/<GROUP_NAME>_result_record.csv`
+
+---
+
+### 3) (Optional) Make instruction animations (Manim)
+
+These scripts render short MP4 instruction clips into `output/videos`:
+
+* `intro.py` (welcome + instructions) 
+* `ready_for_your_test.py` (ready screen) 
+* `two_sin_wave.py` (visual example with two sine waves) 
+* `we_shoose.py` (explains “choose Second”) 
+* `Whole_audio.py` (shows a full 4-pair pattern) 
+* `make_anima.py` (trend-line visualization demo) 
+
+Run any one:
+
+```bash
+python intro.py
+python ready_for_your_test.py
+python two_sin_wave.py
+python we_shoose.py
+python Whole_audio.py
+python make_anima.py
+```
+
+---
+
+### 4) (Optional) Convert WAV → MP4 (static image + audio)
+
+Useful if your survey platform prefers video uploads.
+
+Edit the paths inside `make_Video.py` (the defaults are Windows example paths), then run: 
+
+```bash
+python make_Video.py
+```
+
+---
+
+### 5) Process survey export CSV (translate + flatten answers)
+
+`transfer.py`:
+
+* handles typical Chinese-encoded exports,
+* translates metadata columns to English,
+* collapses “Pair 1-First/Second/Equal” style columns into a single value per pair. 
+
+```bash
+python transfer.py
+```
+
+Output:
+
+* `processed_data_english.csv`
+
+---
+
+### 6) Score the survey (error counts by ΔHz)
+
+`judge.py`:
+
+* uses a **hard-coded answer key** for three parts:
+
+  * center 200 Hz
+  * center 1000 Hz
+  * center 5000 Hz
+* computes error counts (0–4) for each audio block and groups them into columns like `8 (1000Hz)` where `8` is `|f - center|`. 
+
+**Important:** the scoring assumes the CSV audio blocks appear in this order:
+
+* `Audio 1..10` → Part A (200 Hz)
+* `Audio 1.1..10.1` → Part B (1000 Hz)
+* `Audio 1.2..10.2` → Part C (5000 Hz) 
+
+Run:
+
+```bash
+python judge.py
+```
+
+Output:
+
+* `final_scored_grouped.csv`
+
+---
+
+### 7) Plot per-participant results
+
+`plot.py` generates bar charts (one PNG per participant), showing error counts across ΔHz for each center frequency group. 
+
+```bash
+python plot.py
+```
+
+Outputs:
+
+* `1.png`, `2.png`, `3.png`, ...
+
+---
+
+## Notes / customization
+
+* Change experiment parameters in `make_audio_record.py` (`CENTER_FREQ`, `STEP_HZ`, `NUM_PAIRS`, etc.). 
+* If you change stimuli generation/order, you **must update the answer key** inside `judge.py` to match your survey’s audio ordering. 
+* `plot.py` sets a Chinese-capable font list; if you don’t have those fonts installed, adjust `plt.rcParams['font.sans-serif']`. 
+
+---
+
+## License
+
+Add your license here (MIT/Apache-2.0/etc.).
+
+```
+```
