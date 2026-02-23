@@ -196,5 +196,8 @@ Outputs:
 
 Add your license here (MIT/Apache-2.0/etc.).
 
-```
-```
+
+## 📜 License
+This project is licensed under the [MIT License](LICENSE).  
+Copyright (c) 2026 Olly, Jenny and Johann
+
