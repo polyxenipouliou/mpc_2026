@@ -1,6 +1,6 @@
 This project is a comprehensive toolkit designed to conduct and analyze **Just Noticeable Difference (JND)** experiments for human auditory frequency perception. It includes tools for generating precise audio stimuli, creating instructional and explanatory visualizations using Manim, batch-processing video files, and analyzing survey results with automated scoring and data visualization.
 
-It is part of the SMC - Music Perception and Cognition Project 2025-2026 by olly, Jenny and Yuhang
+It is part of the SMC - Music Perception and Cognition Project 2025-2026 by Olly, Jenny and Yuhang
 
 
 ---
