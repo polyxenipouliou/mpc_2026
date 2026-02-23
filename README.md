@@ -1,5 +1,6 @@
 
-# mpc_2026 — Frequency JND Survey Toolkit
+# SMC - Music Perception and Cognition Project 2025-2026
+ — Frequency JND Survey Toolkit
 
 A small Python toolkit to **run a frequency discrimination (JND) survey** end-to-end:
 - generate **tone-pair WAV stimuli** (with randomized order + answer keys),
